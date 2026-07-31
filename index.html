@@ -2,25 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gemini AI 1990s Developer Workspace v3.0 (IndexedDB Edition)</title>
-    <!-- Lightweight Markdown Parser to render unstyled layout elements natively -->
+    <title>Developer AI Workspace & Code Sandbox</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" onload="initializeSystem()">
 
-    <h1>Gemini AI 1990s Developer Workspace v3.0</h1>
-    <p><i>Zero-design client-side engineering workbench with persistent IndexedDB multi-session archive layers.</i></p>
+    <h1>Developer AI Workspace & Code Sandbox</h1>
     <hr size="3" noshade>
 
-    <!-- ARCHIVE & PERSISTENCE CONTROL MATRIX (INDEXEDDB) -->
+    <!-- MODULE ENGINE & EXTENSION MANAGER -->
+    <table width="100%" border="1" cellpadding="8" cellspacing="0" bgcolor="#F0F8FF">
+        <tr>
+            <td>
+                <strong>1. MODULE ENGINE (RUNTIME EXTENSIONS)</strong><br><br>
+                <label for="moduleFileInput">Load External Feature/Provider Module (.js file):</label>
+                <input type="file" id="moduleFileInput" accept=".js" onchange="handleModuleUpload(event)">
+                <br><br>
+                <div id="moduleStatus" style="font-family: monospace; font-size: 12px; color: #555555;">
+                    No external system modules initialized. Exposing global window.ModuleEngine framework hooks.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- ARCHIVE & PERSISTENCE CONTROL MATRIX -->
     <table width="100%" border="1" cellpadding="8" cellspacing="0" bgcolor="#DCDCDC">
         <tr>
             <td>
-                <strong>1. CONVERSATION ARCHIVE MANAGER (INDEXEDDB STORAGE ENGINE)</strong>
+                <strong>2. SESSION DATABASE ARCHIVE</strong>
                 <br><br>
                 <form onsubmit="return false;">
                     <label for="sessionSelect">Saved Sessions Vault:</label>
-                    <select id="sessionSelect" onchange="handleSessionSelectChange()">
+                    <select id="sessionSelect">
                         <option value="">-- No sessions stored or active --</option>
                     </select>
                     &nbsp;
@@ -30,9 +45,8 @@
                     &nbsp;
                     <input type="button" value="Start New Clean Session" onclick="startNewSession()">
                     <br><br>
-                    <label for="sessionTitleInput">Current Active Session Title:</label>
+                    <label for="sessionTitleInput">Current Session Title:</label>
                     <input type="text" id="sessionTitleInput" size="50" value="New Unsaved Prototyping Run" onchange="saveCurrentSessionState()">
-                    &nbsp;<small><font color="#A52A2A"><b>* Auto-saves to IndexedDB after every model response block iteration</b></font></small>
                 </form>
             </td>
         </tr>
@@ -40,51 +54,60 @@
 
     <br>
 
-    <!-- RUNTIME PARAMETER PANEL -->
+    <!-- RUNTIME PROVIDER PARAMETER PANEL -->
     <table width="100%" border="1" cellpadding="8" cellspacing="0" bgcolor="#EAEAEA">
         <tr>
             <td>
-                <strong>2. ENGINE GROUNDING & BEHAVIOR CONFIGURATION</strong>
+                <strong>3. CORE AI PROVIDER & BEHAVIOR CONFIGURATION</strong>
                 <br><br>
                 <form onsubmit="return false;">
-                    <label for="apiKey">Gemini API Key:</label>
-                    <input type="password" id="apiKey" size="30" placeholder="AIzaSy..." onchange="saveKey()">
-                    <small><font color="#555555"> (Saved separately to local browser credentials bucket)</font></small>
+                    <label for="providerSelect">Provider Ecosystem:</label>
+                    <select id="providerSelect" onchange="handleProviderChange()">
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI Native</option>
+                    </select>
+                    &nbsp;&nbsp;
+
+                    <label for="apiKey">API Key / Endpoint Token:</label>
+                    <input type="password" id="apiKey" size="30" placeholder="Paste credential token..." onchange="saveKey()">
                     &nbsp;&nbsp;
                     
                     <label for="modelSelect">Target Model:</label>
                     <select id="modelSelect" onchange="checkCustomModel()">
-                        <option value="gemini-3.6-flash">gemini-3.6-flash (Performance Default)</option>
-                        <option value="gemini-3.5-flash">gemini-3.5-flash</option>
-                        <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
-                        <option value="gemini-3.1-pro">gemini-3.1-pro (Deep Coding & Logic)</option>
-                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                        <option value="CUSTOM">[Type Custom String Identifier]</option>
+                        <!-- Populated dynamically via JS based on provider choice -->
                     </select>
                     
                     <span id="customModelWrapper" style="display: none;">
-                        <input type="text" id="customModelInput" size="20" placeholder="e.g., gemini-3.1-pro-preview">
+                        <input type="text" id="customModelInput" size="20" placeholder="Exact identifier string" onchange="saveCurrentSessionState()">
                     </span>
                     <br><br>
 
-                    <input type="checkbox" id="enableGrounding" value="1" onchange="saveCurrentSessionState()">
-                    <label for="enableGrounding"><b>Enable Web Grounding</b> (Injects Google Search connectivity directly into stream processing logs)</label>
-                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <div id="geminiOptions">
+                        <input type="checkbox" id="enableGrounding" value="1" onchange="saveCurrentSessionState()">
+                        <label for="enableGrounding"><b>Enable Google Web Grounding Search Tool</b></label>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <label for="thinkingLevelSelect"><b>Thinking Budget:</b></label>
+                        <select id="thinkingLevelSelect" onchange="saveCurrentSessionState()">
+                            <option value="DEFAULT">Default (Dynamic)</option>
+                            <option value="minimal">minimal</option>
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                        </select>
+                    </div>
 
-                    <label for="thinkingLevelSelect"><b>Thinking Budget Level:</b></label>
-                    <select id="thinkingLevelSelect" onchange="saveCurrentSessionState()">
-                        <option value="DEFAULT">Default (Model Choice / Dynamic)</option>
-                        <option value="minimal">minimal (Lowest latency budget)</option>
-                        <option value="low">low (Fast targeted reasoning)</option>
-                        <option value="medium">medium (Balanced analytical processing)</option>
-                        <option value="high">high (Maximum code verification depth)</option>
-                    </select>
+                    <div id="openaiOptions" style="display: none;">
+                        <label for="openaiReasoningSelect"><b>Reasoning Effort (O-Series Models):</b></label>
+                        <select id="openaiReasoningSelect" onchange="saveCurrentSessionState()">
+                            <option value="none">Disabled / Standard Text</option>
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                        </select>
+                    </div>
                 </form>
                 <br>
-                <label for="sysInstruction">System Instruction Guardrails:</label><br>
+                <label for="sysInstruction">System Guardrails / Directives:</label><br>
                 <textarea id="sysInstruction" rows="2" style="width: 99%;" onchange="saveCurrentSessionState()">You are a rapid-iteration technical prototyping assistant. Respond using strict Markdown text architecture to cleanly break down plans, schemas, and modular components. When providing deployable web elements, wrap all production-ready markup entirely inside standard ```html ... ``` code fences block tags.</textarea>
             </td>
         </tr>
@@ -92,13 +115,13 @@
 
     <br>
 
-    <!-- DIAGNOSTIC PIPELINE MONITOR (THINKING MONITOR) -->
+    <!-- INTERNAL REASONING / THINKING STREAM OUTPUT -->
     <table width="100%" border="1" cellpadding="6" cellspacing="0" bgcolor="#000000">
         <tr>
             <td>
                 <font color="#00FF00" face="monospace">
-                    <strong>[SYSTEM LOGS - INTERNAL MODEL LOGIC & REASONING PIPELINE]</strong>
-                    <div id="thoughtStream" style="height: 90px; overflow-y: scroll; font-size: 11px; margin-top: 5px; white-space: pre-wrap; color: #00FF00;">Awaiting pipeline transaction initialization... Thoughts generate here when using models with reasoning tracking active.</div>
+                    <strong>[SYSTEM DIAGNOSTICS LOGS - MODEL REASONING PIPELINE]</strong>
+                    <div id="thoughtStream" style="height: 90px; overflow-y: scroll; font-size: 11px; margin-top: 5px; white-space: pre-wrap; color: #00FF00;">Awaiting operation execution context...</div>
                 </font>
             </td>
         </tr>
@@ -106,206 +129,249 @@
 
     <br>
 
-    <!-- CORE INTERACTION FRAMEWORK -->
+    <!-- MAIN TWO-PANE COUPLING HUB -->
     <table width="100%" border="1" cellspacing="0" cellpadding="10">
         <tr valign="top">
-            <!-- LEFT ENGINE PANE: CHAT LOGS WITH MARKDOWN PARSING ENGINE -->
             <td width="48%" bgcolor="#F5F5F5">
-                <p><strong>3. MARKDOWN TERMINAL (INPUT & HISTORIC LOGS)</strong></p>
+                <p><strong>4. REVERSIBLE MARKDOWN RUNTIME TERMINAL</strong></p>
                 <hr>
-                
-                <!-- Active Chat Output Context -->
                 <div id="chatConsole" style="height: 450px; overflow-y: scroll; border: 1px solid #000000; background-color: #FFFFFF; padding: 10px; font-family: 'Times New Roman', Times, serif; font-size: 14px;">
-                    <p><font color="#808080">--- Pipeline online. Ready for Markdown stream. ---</font></p>
+                    <p><font color="#808080">--- Environment loaded. Awaiting transmission instructions. ---</font></p>
                 </div>
-                
                 <br>
-                
-                <!-- Input Terminal Entry Layer -->
                 <form onsubmit="sendMessage(); return false;">
-                    <label for="userInput"><strong>Submit Text Prompt (Markdown formatting is fully supported):</strong></label><br>
-                    <textarea id="userInput" rows="6" style="width: 98%; font-family: monospace;" placeholder="### Plan\n1. Write a breakdown of the database schema.\n2. Then generate code..."></textarea>
+                    <label for="userInput"><strong>Submit Prompt (Markdown inputs supported):</strong></label><br>
+                    <textarea id="userInput" rows="6" style="width: 98%; font-family: monospace;" placeholder="### Input Details..."></textarea>
                     <br><br>
                     <input type="submit" id="submitBtn" value="Execute Pipeline Query">
                 </form>
             </td>
 
-            <!-- RIGHT ENGINE PANE: LIVE SANDBOX EXECUTION & SOURCE ENGINE -->
             <td width="52%" bgcolor="#FAFAFA">
-                <p><strong>4. RENDERING ENGINE & CODE EXPORT</strong></p>
+                <p><strong>5. AUTOMATED RENDERING ENGINE</strong></p>
                 <hr>
-                
-                <label><strong>Sandbox Dynamic Execution Frame:</strong></label><br>
+                <label><strong>Dynamic Execution Frame Sandbox:</strong></label><br>
                 <iframe id="sandboxFrame" name="sandboxFrame" style="width: 100%; height: 420px; border: 2px inset #000000; background-color: #FFFFFF;" sandbox="allow-scripts"></iframe>
-                
                 <br><br>
-                
-                <label for="extractedSource"><strong>Extracted Code Blocks View (Isolated Text Source):</strong></label>
-                <input type="button" value="Manually Force Compilation Refresh" onclick="forceRenderSource()" style="float: right;"><br>
-                <textarea id="extractedSource" rows="6" style="width: 98%; font-family: monospace; font-size: 12px; margin-top: 4px;" placeholder="Executable components isolated inside AI Markdown envelopes populate this block directly." onchange="saveCurrentSessionState()"></textarea>
+                <label for="extractedSource"><strong>Extracted Source File Context View:</strong></label>
+                <input type="button" value="Force UI Hot Refresh" onclick="forceRenderSource()" style="float: right;"><br>
+                <textarea id="extractedSource" rows="6" style="width: 98%; font-family: monospace; font-size: 12px; margin-top: 4px;" placeholder="AI isolated blocks drop natively inside this container frame workspace." onchange="saveCurrentSessionState()"></textarea>
             </td>
         </tr>
     </table>
 
     <hr size="1" noshade>
-    <p align="center"><font size="2">Pure client-side multi-state execution architecture via HTML5 IndexedDB API. Zero external frames.</font></p>
 
-    <!-- CORE FUNCTIONAL OPERATIONS INTERLOCKED WITH GEMINI SCHEMAS -->
+    <!-- PROGRAM CORE SCRIPT ENGINE INTERLOCK -->
     <script type="text/javascript">
         let dbInstance = null;
         let activeSessionId = null;
         let conversationHistory = [];
 
-        // INITIALIZATION MATRIX
+        // MODEL LIST ARRAYS
+        const modelRegistry = {
+            gemini: [
+                { name: "gemini-3.6-flash (Performance Default)", val: "gemini-3.6-flash" },
+                { name: "gemini-3.5-flash", val: "gemini-3.5-flash" },
+                { name: "gemini-3.5-flash-lite", val: "gemini-3.5-flash-lite" },
+                { name: "gemini-3.1-pro (Deep Coding & Logic)", val: "gemini-3.1-pro" },
+                { name: "gemini-2.5-pro", val: "gemini-2.5-pro" },
+                { name: "gemini-2.5-flash", val: "gemini-2.5-flash" },
+                { name: "gemini-1.5-pro", val: "gemini-1.5-pro" },
+                { name: "gemini-1.5-flash", val: "gemini-1.5-flash" },
+                { name: "CUSTOM [Manual Entry Identity String]", val: "CUSTOM" }
+            ],
+            openai: [
+                { name: "gpt-4o (Standard Flagship Intelligence)", val: "gpt-4o" },
+                { name: "gpt-4o-mini", val: "gpt-4o-mini" },
+                { name: "o1 (Advanced Deep Multi-turn Reasoning)", val: "o1" },
+                { name: "o3-mini", val: "o3-mini" },
+                { name: "CUSTOM [Manual Entry Identity String]", val: "CUSTOM" }
+            ]
+        };
+
+        // GLOBAL MODULE ENGINE LAYER ARCHITECTURE
+        window.ModuleEngine = {
+            customProviders: {},
+            registerProvider: function(providerId, providerName, modelArray, customStreamExecutionHandler) {
+                this.customProviders[providerId] = {
+                    name: providerName,
+                    models: modelArray,
+                    handler: customStreamExecutionHandler
+                };
+                
+                // Add option element dynamically to select list container
+                const provSel = document.getElementById("providerSelect");
+                const opt = document.createElement("option");
+                opt.value = providerId;
+                opt.textContent = providerName + " [Module Extension]";
+                provSel.appendChild(opt);
+
+                document.getElementById("moduleStatus").innerText = "Successfully integrated operational extension: " + providerName;
+            }
+        };
+
+        function handleModuleUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Safety wrapped internal evaluation step to register standard hook calls
+                    const moduleScriptContent = e.target.result;
+                    const executeModuleRegistrationClosure = new Function(moduleScriptContent);
+                    executeModuleRegistrationClosure();
+                } catch(err) {
+                    alert("Module Runtime Integration Aborted: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // SYSTEM LIFECYCLE CONTROLLER
         function initializeSystem() {
-            loadSavedKey();
             initIndexedDB().then(() => {
                 populateSessionDropdown();
+                handleProviderChange();
                 startNewSession();
             }).catch(err => {
-                alert("IndexedDB Initialization Failed: " + err.message);
+                alert("Database Sandbox Layer Fault: " + err.message);
             });
         }
 
-        // INDEXEDDB ENGINE SUBSYSTEM
         function initIndexedDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open("GeminiRetroWorkbenchDB", 1);
-                
-                request.onupgradeneeded = function(e) {
+                const request = indexedDB.open("SystemMultiProviderEngineDB", 1);
+                request.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("sessions")) {
                         db.createObjectStore("sessions", { keyPath: "id" });
                     }
                 };
-
-                request.onsuccess = function(e) {
-                    dbInstance = e.target.result;
-                    resolve();
-                };
-
-                request.onerror = function(e) {
-                    reject(e.target.error);
-                };
+                request.onsuccess = e => { dbInstance = e.target.result; resolve(); };
+                request.onerror = e => reject(e.target.error);
             });
         }
 
-        function saveKey() {
-            const key = document.getElementById("apiKey").value.trim();
-            localStorage.setItem("gemini_workbench_key", key);
+        function handleProviderChange() {
+            const currentProvider = document.getElementById("providerSelect").value;
+            const modelSelect = document.getElementById("modelSelect");
+            modelSelect.innerHTML = "";
+
+            document.getElementById("geminiOptions").style.display = (currentProvider === "gemini") ? "block" : "none";
+            document.getElementById("openaiOptions").style.display = (currentProvider === "openai") ? "block" : "none";
+
+            // Verify if provider targets core assets or is dynamic module injection payload
+            if (modelRegistry[currentProvider]) {
+                modelRegistry[currentProvider].forEach(m => {
+                    const o = document.createElement("option");
+                    o.value = m.val;
+                    o.textContent = m.name;
+                    modelSelect.appendChild(o);
+                });
+            } else if (window.ModuleEngine.customProviders[currentProvider]) {
+                window.ModuleEngine.customProviders[currentProvider].models.forEach(m => {
+                    const o = document.createElement("option");
+                    o.value = m.val;
+                    o.textContent = m.name;
+                    modelSelect.appendChild(o);
+                });
+            }
+
+            loadSavedKeyForProvider(currentProvider);
+            checkCustomModel();
         }
 
-        function loadSavedKey() {
-            const savedKey = localStorage.getItem("gemini_workbench_key");
-            if (savedKey) {
-                document.getElementById("apiKey").value = savedKey;
-            }
+        function saveKey() {
+            const provider = document.getElementById("providerSelect").value;
+            const value = document.getElementById("apiKey").value.trim();
+            localStorage.setItem("key_cache_" + provider, value);
+        }
+
+        function loadSavedKeyForProvider(provider) {
+            const cache = localStorage.getItem("key_cache_" + provider);
+            document.getElementById("apiKey").value = cache ? cache : "";
         }
 
         function checkCustomModel() {
-            const selectEl = document.getElementById("modelSelect");
-            const wrapper = document.getElementById("customModelWrapper");
-            wrapper.style.display = (selectEl.value === "CUSTOM") ? "inline" : "none";
+            const sel = document.getElementById("modelSelect").value;
+            document.getElementById("customModelWrapper").style.display = (sel === "CUSTOM") ? "inline" : "none";
             saveCurrentSessionState();
         }
 
-        function getActiveModel() {
-            const selectEl = document.getElementById("modelSelect");
-            if (selectEl.value === "CUSTOM") {
-                return document.getElementById("customModelInput").value.trim();
-            }
-            return selectEl.value;
+        function getActiveModelIdentifier() {
+            const sel = document.getElementById("modelSelect").value;
+            return (sel === "CUSTOM") ? document.getElementById("customModelInput").value.trim() : sel;
         }
 
-        // SESSION MANAGEMENT LAYER
+        // DATABASE CORE OPERATIONS LAYER
         function startNewSession() {
             activeSessionId = "session_" + Date.now();
             conversationHistory = [];
-            document.getElementById("sessionTitleInput").value = "Session Run [" + new Date().toLocaleString() + "]";
-            document.getElementById("chatConsole").innerHTML = "<p><font color='#808080'>--- Pipeline online. New session initialized. ---</font></p>";
+            document.getElementById("sessionTitleInput").value = "Workspace Instance Run [" + new Date().toLocaleTimeString() + "]";
+            document.getElementById("chatConsole").innerHTML = "<p><font color='#808080'>--- Clean context initialized. Workspace tracking live. ---</font></p>";
             document.getElementById("extractedSource").value = "";
-            document.getElementById("thoughtStream").innerText = "Awaiting pipeline transaction initialization...";
-            document.getElementById("sandboxFrame").srcdoc = "<html><body><p align='center' style='color:#808080; font-family:sans-serif; margin-top:100px;'>Workspace Blank</p></body></html>";
+            document.getElementById("thoughtStream").innerText = "Awaiting operation execution context...";
+            document.getElementById("sandboxFrame").srcdoc = "<html><body><p align='center' style='color:#808080; margin-top:100px; font-family:sans-serif;'>Sandbox Idle</p></body></html>";
             document.getElementById("sessionSelect").value = "";
         }
 
         function saveCurrentSessionState() {
             if (!dbInstance || !activeSessionId) return;
 
-            const transaction = dbInstance.transaction(["sessions"], "readwrite");
-            const store = transaction.objectStore("sessions");
-
             const sessionData = {
                 id: activeSessionId,
                 title: document.getElementById("sessionTitleInput").value.trim(),
                 history: conversationHistory,
                 extractedSource: document.getElementById("extractedSource").value,
+                provider: document.getElementById("providerSelect").value,
                 model: document.getElementById("modelSelect").value,
                 customModel: document.getElementById("customModelInput").value,
                 grounding: document.getElementById("enableGrounding").checked,
                 thinkingLevel: document.getElementById("thinkingLevelSelect").value,
+                openaiReasoning: document.getElementById("openaiReasoningSelect").value,
                 sysInstruction: document.getElementById("sysInstruction").value,
                 updatedAt: Date.now()
             };
 
-            store.put(sessionData);
-
-            transaction.oncomplete = function() {
-                populateSessionDropdown(activeSessionId);
-            };
+            const store = dbInstance.transaction(["sessions"], "readwrite").objectStore("sessions");
+            store.put(sessionData).onsuccess = () => populateSessionDropdown(activeSessionId);
         }
 
         function populateSessionDropdown(selectIdAfterRefresh = null) {
             if (!dbInstance) return;
-
             const dropdown = document.getElementById("sessionSelect");
             dropdown.innerHTML = "";
 
-            const store = dbInstance.transaction(["sessions"], "readonly").objectStore("sessions");
-            const request = store.openCursor(null, "prev"); // Sort newest first
-            
             let hasEntries = false;
-
-            request.onsuccess = function(e) {
+            dbInstance.transaction(["sessions"], "readonly").objectStore("sessions").openCursor(null, "prev").onsuccess = e => {
                 const cursor = e.target.result;
                 if (cursor) {
                     hasEntries = true;
-                    const option = document.createElement("option");
-                    option.value = cursor.value.id;
-                    option.textContent = cursor.value.title || cursor.value.id;
-                    dropdown.appendChild(option);
+                    const opt = document.createElement("option");
+                    opt.value = cursor.value.id;
+                    opt.textContent = cursor.value.title || cursor.value.id;
+                    dropdown.appendChild(opt);
                     cursor.continue();
                 } else {
                     if (!hasEntries) {
-                        const option = document.createElement("option");
-                        option.value = "";
-                        option.textContent = "-- No sessions stored or active --";
-                        dropdown.appendChild(option);
+                        const opt = document.createElement("option");
+                        opt.value = ""; opt.textContent = "-- No sessions stored or active --";
+                        dropdown.appendChild(opt);
                     }
-                    if (selectIdAfterRefresh) {
-                        dropdown.value = selectIdAfterRefresh;
-                    } else if (activeSessionId) {
-                        // Check if current active matches an option, keep it aligned
-                        dropdown.value = activeSessionId;
-                    }
+                    if (selectIdAfterRefresh) dropdown.value = selectIdAfterRefresh;
+                    else if (activeSessionId) dropdown.value = activeSessionId;
                 }
             };
         }
 
-        function handleSessionSelectChange() {
-            // Dropdown selection track alone won't trigger load until explicit button invocation
-        }
-
         function loadSelectedSession() {
-            const dropdown = document.getElementById("sessionSelect");
-            const selectedId = dropdown.value;
-            if (!selectedId) return;
+            const targetId = document.getElementById("sessionSelect").value;
+            if (!targetId) return;
 
-            const store = dbInstance.transaction(["sessions"], "readonly").objectStore("sessions");
-            const request = store.get(selectedId);
-
-            request.onsuccess = function() {
-                const data = request.result;
+            dbInstance.transaction(["sessions"], "readonly").objectStore("sessions").get(targetId).onsuccess = e => {
+                const data = e.target.result;
                 if (!data) return;
 
                 activeSessionId = data.id;
@@ -313,90 +379,68 @@
                 conversationHistory = data.history || [];
                 document.getElementById("extractedSource").value = data.extractedSource || "";
                 
+                if (data.provider) document.getElementById("providerSelect").value = data.provider;
+                handleProviderChange();
+                
                 if (data.model) document.getElementById("modelSelect").value = data.model;
                 if (data.customModel) document.getElementById("customModelInput").value = data.customModel;
                 document.getElementById("enableGrounding").checked = !!data.grounding;
                 if (data.thinkingLevel) document.getElementById("thinkingLevelSelect").value = data.thinkingLevel;
+                if (data.openaiReasoning) document.getElementById("openaiReasoningSelect").value = data.openaiReasoning;
                 if (data.sysInstruction) document.getElementById("sysInstruction").value = data.sysInstruction;
 
                 checkCustomModel();
                 rebuildChatConsoleUI();
                 forceRenderSource();
-                document.getElementById("thoughtStream").innerText = "[Restored historical logs session package details from file architecture]";
+                document.getElementById("thoughtStream").innerText = "[Restored historical session trace data]";
             };
         }
 
         function deleteSelectedSession() {
-            const dropdown = document.getElementById("sessionSelect");
-            const selectedId = dropdown.value;
-            if (!selectedId) return;
+            const targetId = document.getElementById("sessionSelect").value;
+            if (!targetId || !confirm("Completely purge this item record data line?")) return;
 
-            if (!confirm("Are you sure you want to completely purge this session recording from IndexedDB memory structures?")) return;
-
-            const transaction = dbInstance.transaction(["sessions"], "readwrite");
-            const store = transaction.objectStore("sessions");
-            store.delete(selectedId);
-
-            transaction.oncomplete = function() {
-                if (activeSessionId === selectedId) {
-                    startNewSession();
-                } else {
-                    populateSessionDropdown();
-                }
+            dbInstance.transaction(["sessions"], "readwrite").objectStore("sessions").delete(targetId).oncomplete = () => {
+                if (activeSessionId === targetId) startNewSession();
+                else populateSessionDropdown();
             };
         }
 
-        // RENDERING DOM MANIPULATION LOOPS
+        // RENDERING DOM CONTROLLER INTERLOCKS
         function rebuildChatConsoleUI() {
             const consoleEl = document.getElementById("chatConsole");
             consoleEl.innerHTML = "";
-
             if (conversationHistory.length === 0) {
-                consoleEl.innerHTML = "<p><font color='#808080'>--- Pipeline online. Ready for Markdown stream. ---</font></p>";
+                consoleEl.innerHTML = "<p><font color='#808080'>--- Environment loaded. Awaiting transmission instructions. ---</font></p>";
                 return;
             }
-
             conversationHistory.forEach(msg => {
-                const senderName = (msg.role === "user") ? "You" : "Gemini";
-                const elements = createMessageBlock(senderName);
-                
-                // Parse strings safely using marked.js configuration rules
-                if (msg.parts && msg.parts[0] && msg.parts[0].text) {
-                    elements.bodyEl.innerHTML = marked.parse(msg.parts[0].text);
-                }
+                const elements = createMessageBlock(msg.role === "user" ? "You" : "Model Output");
+                elements.bodyEl.innerHTML = marked.parse(msg.text || (msg.parts && msg.parts[0] ? msg.parts[0].text : ""));
             });
-
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
         function createMessageBlock(sender) {
             const consoleEl = document.getElementById("chatConsole");
-            const entryBlock = document.createElement("div");
-            entryBlock.style.marginBottom = "15px";
-            entryBlock.style.borderBottom = "1px dashed #D0D0D0";
-            entryBlock.style.paddingBottom = "10px";
+            const div = document.createElement("div");
+            div.style.marginBottom = "15px";
+            div.style.borderBottom = "1px dashed #D0D0D0";
+            div.style.paddingBottom = "10px";
             
-            let headerColor = (sender === "You") ? "#00008B" : "#006400";
-            entryBlock.innerHTML = "<strong><font color='" + headerColor + "'>" + sender + ":</font></strong><br><div class='msg-body'></div><div class='msg-sources' style='margin-top:8px; font-size:12px;'></div>";
-            
-            consoleEl.appendChild(entryBlock);
+            let color = (sender === "You") ? "#00008B" : "#006400";
+            div.innerHTML = "<strong><font color='" + color + "'>" + sender + ":</font></strong><br><div class='msg-body'></div><div class='msg-sources' style='margin-top:8px; font-size:12px;'></div>";
+            consoleEl.appendChild(div);
             consoleEl.scrollTop = consoleEl.scrollHeight;
-            return {
-                bodyEl: entryBlock.querySelector('.msg-body'),
-                sourcesEl: entryBlock.querySelector('.msg-sources')
-            };
+            return { bodyEl: div.querySelector('.msg-body'), sourcesEl: div.querySelector('.msg-sources') };
         }
 
         function processCodeBlocks(rawText) {
-            let codeMatch = rawText.match(/```html([\s\S]*?)```/i);
-            if (!codeMatch) {
-                codeMatch = rawText.match(/```([\s\S]*?)```/);
-            }
-
-            if (codeMatch && codeMatch[1]) {
-                const targetCode = codeMatch[1].trim();
-                document.getElementById("extractedSource").value = targetCode;
-                document.getElementById("sandboxFrame").srcdoc = targetCode;
+            let match = rawText.match(/```html([\s\S]*?)```/i) || rawText.match(/```([\s\S]*?)```/);
+            if (match && match[1]) {
+                const code = match[1].trim();
+                document.getElementById("extractedSource").value = code;
+                document.getElementById("sandboxFrame").srcdoc = code;
             } else if (rawText.trim().toLowerCase().startsWith("<!doctype html") || rawText.trim().toLowerCase().startsWith("<html")) {
                 document.getElementById("extractedSource").value = rawText;
                 document.getElementById("sandboxFrame").srcdoc = rawText;
@@ -404,156 +448,183 @@
         }
 
         function forceRenderSource() {
-            const currentCode = document.getElementById("extractedSource").value;
-            document.getElementById("sandboxFrame").srcdoc = currentCode || "<html><body><p align='center' style='color:#808080; font-family:sans-serif; margin-top:100px;'>No compilation target output detected</p></body></html>";
+            const code = document.getElementById("extractedSource").value;
+            document.getElementById("sandboxFrame").srcdoc = code || "<html><body><p align='center' style='margin-top:100px; color:#808080;'>No compilation source execution sequence targeted</p></body></html>";
         }
 
-        // LIVE STREAM TRANSMISSION HANDLING
+        // API PIPELINE BROADCAST DISTRIBUTOR
         async function sendMessage() {
+            const provider = document.getElementById("providerSelect").value;
             const apiKey = document.getElementById("apiKey").value.trim();
-            const modelName = getActiveModel();
-            const promptText = document.getElementById("userInput").value.trim();
-            const systemInstruction = document.getElementById("sysInstruction").value.trim();
+            const modelIdent = getActiveModelIdentifier();
+            const textPrompt = document.getElementById("userInput").value.trim();
+            const sysInstruction = document.getElementById("sysInstruction").value.trim();
 
-            if (!apiKey) {
-                alert("API Interface Error: Key missing parameter inputs.");
-                return;
-            }
-            if (!promptText) return;
-            if (!modelName) {
-                alert("Model Selection Error: String initialization missing.");
-                return;
-            }
+            if (!apiKey) { alert("Execution Fault: Active Provider API token parameters required."); return; }
+            if (!textPrompt) return;
 
             document.getElementById("submitBtn").disabled = true;
-            document.getElementById("submitBtn").value = "Streaming...";
+            document.getElementById("submitBtn").value = "Streaming Data Frame...";
             
-            const userElements = createMessageBlock("You");
-            userElements.bodyEl.innerHTML = marked.parse(promptText);
-            
+            const userBlocks = createMessageBlock("You");
+            userBlocks.bodyEl.innerHTML = marked.parse(textPrompt);
             document.getElementById("userInput").value = "";
-            document.getElementById("thoughtStream").innerText = "[Executing deep thinking loops...]\n";
+            document.getElementById("thoughtStream").innerText = "[Initializing network transport handshake channels...]\n";
 
-            conversationHistory.push({
-                "role": "user",
-                "parts": [{"text": promptText}]
-            });
-
-            // Intermediate sync execution block to ensure user data saves if the system drops connection mid-stream
+            // RECONCILE FORMAT SHAPES TO MAP INTERNALLY UNIFORM RECORDS
+            conversationHistory.push({ role: "user", text: textPrompt });
             saveCurrentSessionState();
 
-            const targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":streamGenerateContent?key=" + apiKey;
-
-            const requestPayload = {
-                "contents": conversationHistory
-            };
-
-            if (systemInstruction) {
-                requestPayload["systemInstruction"] = { "parts": [{"text": systemInstruction}] };
-            }
-
-            if (document.getElementById("enableGrounding").checked) {
-                requestPayload["tools"] = [{ "googleSearch": {} }];
-            }
-
-            const selectedThinkingLevel = document.getElementById("thinkingLevelSelect").value;
-            if (selectedThinkingLevel !== "DEFAULT") {
-                requestPayload["generationConfig"] = requestPayload["generationConfig"] || {};
-                requestPayload["generationConfig"]["thinkingConfig"] = {
-                    "thinkingLevel": selectedThinkingLevel
-                };
-            }
-
-            const aiElements = createMessageBlock("Gemini");
-            let fullAccumulatedResponse = "";
-            let fullThoughtTracking = "";
-            let sourcesFound = false;
+            const aiBlocks = createMessageBlock("Model Output");
+            let outputText = "";
+            let logicText = "";
 
             try {
-                const response = await fetch(targetUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(requestPayload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error("HTTP " + response.status + " - " + errorText);
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder("utf-8");
-                let responseBuffer = "";
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-
-                    responseBuffer += decoder.decode(value, { stream: true });
-                    
-                    let boundaryIndex;
-                    while ((boundaryIndex = responseBuffer.indexOf("}\n,")) !== -1 || (boundaryIndex = responseBuffer.indexOf("}\n]")) !== -1) {
-                        let singleChunkRaw = responseBuffer.substring(0, boundaryIndex + 1).trim();
-                        responseBuffer = responseBuffer.substring(boundaryIndex + 3);
-
-                        if (singleChunkRaw.startsWith("[")) {
-                            singleChunkRaw = singleChunkRaw.substring(1).trim();
+                // ROUTE PIPELINE EXECUTION PATHWAY BASED ON SELECTION TARGET
+                if (window.ModuleEngine.customProviders[provider]) {
+                    // Hand off control vector directly to extension module execution runtime
+                    await window.ModuleEngine.customProviders[provider].handler({
+                        apiKey: apiKey,
+                        model: modelIdent,
+                        prompt: textPrompt,
+                        history: conversationHistory,
+                        systemInstruction: sysInstruction,
+                        onTextChunk: function(chunk) {
+                            outputText += chunk;
+                            aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
+                            document.getElementById("chatConsole").scrollTop = document.getElementById("chatConsole").scrollHeight;
+                        },
+                        onThoughtChunk: function(chunk) {
+                            logicText += chunk;
+                            document.getElementById("thoughtStream").innerText = logicText;
+                            document.getElementById("thoughtStream").scrollTop = document.getElementById("thoughtStream").scrollHeight;
                         }
+                    });
+                } 
+                else if (provider === "gemini") {
+                    // GOOGLE GEMINI EXECUTION SYSTEM PIPELINE
+                    const targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelIdent + ":streamGenerateContent?key=" + apiKey;
+                    const payload = { contents: conversationHistory.map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })) };
+                    
+                    if (sysInstruction) payload.systemInstruction = { parts: [{ text: sysInstruction }] };
+                    if (document.getElementById("enableGrounding").checked) payload.tools = [{ googleSearch: {} }];
+                    
+                    const thk = document.getElementById("thinkingLevelSelect").value;
+                    if (thk !== "DEFAULT") {
+                        payload.generationConfig = { thinkingConfig: { thinkingLevel: thk } };
+                    }
 
-                        try {
-                            if (!singleChunkRaw) continue;
-                            const parsedChunk = JSON.parse(singleChunkRaw);
-                            const candidate = parsedChunk.candidates && parsedChunk.candidates[0];
-                            
-                            if (candidate && candidate.content && candidate.content.parts) {
-                                for (const part of candidate.content.parts) {
-                                    if (part.thought || ('text' in part && candidate.content.role === 'thought')) {
-                                        fullThoughtTracking += part.text;
-                                        document.getElementById("thoughtStream").innerText = fullThoughtTracking;
-                                        document.getElementById("thoughtStream").scrollTop = document.getElementById("thoughtStream").scrollHeight;
-                                    } 
-                                    else if (part.text) {
-                                        fullAccumulatedResponse += part.text;
-                                        aiElements.bodyEl.innerHTML = marked.parse(fullAccumulatedResponse);
-                                        document.getElementById("chatConsole").scrollTop = document.getElementById("chatConsole").scrollHeight;
+                    const response = await fetch(targetUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error("HTTP Channel Error: " + response.status + " - " + await response.text());
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+                    let sourcesFound = false;
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        
+                        let idx;
+                        while ((idx = buffer.indexOf("}\n,")) !== -1 || (idx = buffer.indexOf("}\n]")) !== -1) {
+                            let chunkRaw = buffer.substring(0, idx + 1).trim();
+                            buffer = buffer.substring(idx + 3);
+                            if (chunkRaw.startsWith("[")) chunkRaw = chunkRaw.substring(1).trim();
+
+                            try {
+                                if (!chunkRaw) continue;
+                                const json = JSON.parse(chunkRaw);
+                                const cand = json.candidates && json.candidates[0];
+                                if (cand && cand.content && cand.content.parts) {
+                                    for (const p of cand.content.parts) {
+                                        if (p.thought || ('text' in p && cand.content.role === 'thought')) {
+                                            logicText += p.text;
+                                            document.getElementById("thoughtStream").innerText = logicText;
+                                        } else if (p.text) {
+                                            outputText += p.text;
+                                            aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
+                                        }
                                     }
                                 }
-                            }
-
-                            if (candidate && candidate.groundingMetadata && !sourcesFound) {
-                                const metadata = candidate.groundingMetadata;
-                                if (metadata.groundingChunks && metadata.groundingChunks.length > 0) {
-                                    sourcesFound = true;
-                                    let htmlSourceLedger = "<hr size='1' noshade><font color='#555555'><b>Grounding Resources Searched:</b></font><ul>";
-                                    metadata.groundingChunks.forEach(chunk => {
-                                        if (chunk.web && chunk.web.uri) {
-                                            htmlSourceLedger += "<li><a href='" + chunk.web.uri + "' target='_blank'>" + (chunk.web.title || chunk.web.uri) + "</a></li>";
-                                        }
-                                    });
-                                    htmlSourceLedger += "</ul>";
-                                    aiElements.sourcesEl.innerHTML = htmlSourceLedger;
+                                if (cand && cand.groundingMetadata && !sourcesFound) {
+                                    const meta = cand.groundingMetadata;
+                                    if (meta.groundingChunks && meta.groundingChunks.length > 0) {
+                                        sourcesFound = true;
+                                        let ledg = "<hr size='1' noshade><font color='#555555'><b>Grounding Traces:</b></font><ul>";
+                                        meta.groundingChunks.forEach(c => { if (c.web) ledg += "<li><a href='" + c.web.uri + "' target='_blank'>" + (c.web.title || c.web.uri) + "</a></li>"; });
+                                        aiBlocks.sourcesEl.innerHTML = ledg + "</ul>";
+                                    }
                                 }
-                            }
-                        } catch (e) {
-                            // Fragment correction catch boundary block
+                            } catch(e) {}
+                        }
+                    }
+                } 
+                else if (provider === "openai") {
+                    // OPENAI CHAT COMPLETIONS EXECUTION SYSTEM PIPELINE
+                    const targetUrl = "https://api.openai.com/v1/chat/completions";
+                    const messages = [];
+                    if (sysInstruction) messages.push({ role: "system", content: sysInstruction });
+                    conversationHistory.forEach(m => messages.push({ role: m.role, content: m.text }));
+
+                    const payload = { model: modelIdent, messages: messages, stream: true };
+                    const rsn = document.getElementById("openaiReasoningSelect").value;
+                    if (rsn !== "none" && (modelIdent.startsWith("o1") || modelIdent.startsWith("o3"))) {
+                        payload.reasoning_effort = rsn;
+                    }
+
+                    const response = await fetch(targetUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error("HTTP Channel Error: " + response.status + " - " + await response.text());
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        
+                        let lines = buffer.split("\n");
+                        buffer = lines.pop(); // Save fragmented track to tail buffer bounds
+
+                        for (let line of lines) {
+                            line = line.trim();
+                            if (!line.startsWith("data: ")) continue;
+                            if (line === "data: [DONE]") break;
+
+                            try {
+                                const json = JSON.parse(line.substring(6));
+                                const delta = json.choices && json.choices[0] && json.choices[0].delta;
+                                if (delta) {
+                                    // Handle reasoning content blocks separately if returned by model
+                                    if (delta.reasoning_content) {
+                                        logicText += delta.reasoning_content;
+                                        document.getElementById("thoughtStream").innerText = logicText;
+                                    }
+                                    if (delta.content) {
+                                        outputText += delta.content;
+                                        aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
+                                    }
+                                }
+                            } catch(e) {}
                         }
                     }
                 }
 
-                conversationHistory.push({
-                    "role": "model",
-                    "parts": [{"text": fullAccumulatedResponse}]
-                });
-
-                processCodeBlocks(fullAccumulatedResponse);
-                
-                // CRITICAL ATOMIC WORK INTERLOCK: Commit total state history directly down into the database layer
+                conversationHistory.push({ role: "assistant", text: outputText });
+                processCodeBlocks(outputText);
                 saveCurrentSessionState();
 
             } catch (err) {
-                const errorBlock = document.createElement("div");
-                errorBlock.innerHTML = "<strong><font color='#FF0000'>System Error Node:</font></strong><pre style='white-space: pre-wrap; font-family: monospace;'> " + err.message + "</pre>";
-                document.getElementById("chatConsole").appendChild(errorBlock);
+                const div = document.createElement("div");
+                div.innerHTML = "<strong><font color='#FF0000'>Pipeline Operation Fault:</font></strong><pre style='white-space: pre-wrap; font-family: monospace;'> " + err.message + "</pre>";
+                document.getElementById("chatConsole").appendChild(div);
                 conversationHistory.pop();
             } finally {
                 document.getElementById("submitBtn").disabled = false;
