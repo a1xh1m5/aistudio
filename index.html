@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gemini AI 1990s Developer Workspace v3.0 (IndexedDB Edition)</title>
+    <!-- Lightweight Markdown Parser to render unstyled layout elements natively -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" onload="initializeSystem()">
+
+    <h1>Gemini AI 1990s Developer Workspace v3.0</h1>
+    <p><i>Zero-design client-side engineering workbench with persistent IndexedDB multi-session archive layers.</i></p>
+    <hr size="3" noshade>
+
+    <!-- ARCHIVE & PERSISTENCE CONTROL MATRIX (INDEXEDDB) -->
+    <table width="100%" border="1" cellpadding="8" cellspacing="0" bgcolor="#DCDCDC">
+        <tr>
+            <td>
+                <strong>1. CONVERSATION ARCHIVE MANAGER (INDEXEDDB STORAGE ENGINE)</strong>
+                <br><br>
+                <form onsubmit="return false;">
+                    <label for="sessionSelect">Saved Sessions Vault:</label>
+                    <select id="sessionSelect" onchange="handleSessionSelectChange()">
+                        <option value="">-- No sessions stored or active --</option>
+                    </select>
+                    &nbsp;
+                    <input type="button" value="Load Session" onclick="loadSelectedSession()">
+                    &nbsp;
+                    <input type="button" value="Delete Session" onclick="deleteSelectedSession()">
+                    &nbsp;
+                    <input type="button" value="Start New Clean Session" onclick="startNewSession()">
+                    <br><br>
+                    <label for="sessionTitleInput">Current Active Session Title:</label>
+                    <input type="text" id="sessionTitleInput" size="50" value="New Unsaved Prototyping Run" onchange="saveCurrentSessionState()">
+                    &nbsp;<small><font color="#A52A2A"><b>* Auto-saves to IndexedDB after every model response block iteration</b></font></small>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- RUNTIME PARAMETER PANEL -->
+    <table width="100%" border="1" cellpadding="8" cellspacing="0" bgcolor="#EAEAEA">
+        <tr>
+            <td>
+                <strong>2. ENGINE GROUNDING & BEHAVIOR CONFIGURATION</strong>
+                <br><br>
+                <form onsubmit="return false;">
+                    <label for="apiKey">Gemini API Key:</label>
+                    <input type="password" id="apiKey" size="30" placeholder="AIzaSy..." onchange="saveKey()">
+                    <small><font color="#555555"> (Saved separately to local browser credentials bucket)</font></small>
+                    &nbsp;&nbsp;
+                    
+                    <label for="modelSelect">Target Model:</label>
+                    <select id="modelSelect" onchange="checkCustomModel()">
+                        <option value="gemini-3.6-flash">gemini-3.6-flash (Performance Default)</option>
+                        <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                        <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                        <option value="gemini-3.1-pro">gemini-3.1-pro (Deep Coding & Logic)</option>
+                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                        <option value="CUSTOM">[Type Custom String Identifier]</option>
+                    </select>
+                    
+                    <span id="customModelWrapper" style="display: none;">
+                        <input type="text" id="customModelInput" size="20" placeholder="e.g., gemini-3.1-pro-preview">
+                    </span>
+                    <br><br>
+
+                    <input type="checkbox" id="enableGrounding" value="1" onchange="saveCurrentSessionState()">
+                    <label for="enableGrounding"><b>Enable Web Grounding</b> (Injects Google Search connectivity directly into stream processing logs)</label>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+
+                    <label for="thinkingLevelSelect"><b>Thinking Budget Level:</b></label>
+                    <select id="thinkingLevelSelect" onchange="saveCurrentSessionState()">
+                        <option value="DEFAULT">Default (Model Choice / Dynamic)</option>
+                        <option value="minimal">minimal (Lowest latency budget)</option>
+                        <option value="low">low (Fast targeted reasoning)</option>
+                        <option value="medium">medium (Balanced analytical processing)</option>
+                        <option value="high">high (Maximum code verification depth)</option>
+                    </select>
+                </form>
+                <br>
+                <label for="sysInstruction">System Instruction Guardrails:</label><br>
+                <textarea id="sysInstruction" rows="2" style="width: 99%;" onchange="saveCurrentSessionState()">You are a rapid-iteration technical prototyping assistant. Respond using strict Markdown text architecture to cleanly break down plans, schemas, and modular components. When providing deployable web elements, wrap all production-ready markup entirely inside standard ```html ... ``` code fences block tags.</textarea>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- DIAGNOSTIC PIPELINE MONITOR (THINKING MONITOR) -->
+    <table width="100%" border="1" cellpadding="6" cellspacing="0" bgcolor="#000000">
+        <tr>
+            <td>
+                <font color="#00FF00" face="monospace">
+                    <strong>[SYSTEM LOGS - INTERNAL MODEL LOGIC & REASONING PIPELINE]</strong>
+                    <div id="thoughtStream" style="height: 90px; overflow-y: scroll; font-size: 11px; margin-top: 5px; white-space: pre-wrap; color: #00FF00;">Awaiting pipeline transaction initialization... Thoughts generate here when using models with reasoning tracking active.</div>
+                </font>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- CORE INTERACTION FRAMEWORK -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="10">
+        <tr valign="top">
+            <!-- LEFT ENGINE PANE: CHAT LOGS WITH MARKDOWN PARSING ENGINE -->
+            <td width="48%" bgcolor="#F5F5F5">
+                <p><strong>3. MARKDOWN TERMINAL (INPUT & HISTORIC LOGS)</strong></p>
+                <hr>
+                
+                <!-- Active Chat Output Context -->
+                <div id="chatConsole" style="height: 450px; overflow-y: scroll; border: 1px solid #000000; background-color: #FFFFFF; padding: 10px; font-family: 'Times New Roman', Times, serif; font-size: 14px;">
+                    <p><font color="#808080">--- Pipeline online. Ready for Markdown stream. ---</font></p>
+                </div>
+                
+                <br>
+                
+                <!-- Input Terminal Entry Layer -->
+                <form onsubmit="sendMessage(); return false;">
+                    <label for="userInput"><strong>Submit Text Prompt (Markdown formatting is fully supported):</strong></label><br>
+                    <textarea id="userInput" rows="6" style="width: 98%; font-family: monospace;" placeholder="### Plan\n1. Write a breakdown of the database schema.\n2. Then generate code..."></textarea>
+                    <br><br>
+                    <input type="submit" id="submitBtn" value="Execute Pipeline Query">
+                </form>
+            </td>
+
+            <!-- RIGHT ENGINE PANE: LIVE SANDBOX EXECUTION & SOURCE ENGINE -->
+            <td width="52%" bgcolor="#FAFAFA">
+                <p><strong>4. RENDERING ENGINE & CODE EXPORT</strong></p>
+                <hr>
+                
+                <label><strong>Sandbox Dynamic Execution Frame:</strong></label><br>
+                <iframe id="sandboxFrame" name="sandboxFrame" style="width: 100%; height: 420px; border: 2px inset #000000; background-color: #FFFFFF;" sandbox="allow-scripts"></iframe>
+                
+                <br><br>
+                
+                <label for="extractedSource"><strong>Extracted Code Blocks View (Isolated Text Source):</strong></label>
+                <input type="button" value="Manually Force Compilation Refresh" onclick="forceRenderSource()" style="float: right;"><br>
+                <textarea id="extractedSource" rows="6" style="width: 98%; font-family: monospace; font-size: 12px; margin-top: 4px;" placeholder="Executable components isolated inside AI Markdown envelopes populate this block directly." onchange="saveCurrentSessionState()"></textarea>
+            </td>
+        </tr>
+    </table>
+
+    <hr size="1" noshade>
+    <p align="center"><font size="2">Pure client-side multi-state execution architecture via HTML5 IndexedDB API. Zero external frames.</font></p>
+
+    <!-- CORE FUNCTIONAL OPERATIONS INTERLOCKED WITH GEMINI SCHEMAS -->
+    <script type="text/javascript">
+        let dbInstance = null;
+        let activeSessionId = null;
+        let conversationHistory = [];
+
+        // INITIALIZATION MATRIX
+        function initializeSystem() {
+            loadSavedKey();
+            initIndexedDB().then(() => {
+                populateSessionDropdown();
+                startNewSession();
+            }).catch(err => {
+                alert("IndexedDB Initialization Failed: " + err.message);
+            });
+        }
+
+        // INDEXEDDB ENGINE SUBSYSTEM
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("GeminiRetroWorkbenchDB", 1);
+                
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("sessions")) {
+                        db.createObjectStore("sessions", { keyPath: "id" });
+                    }
+                };
+
+                request.onsuccess = function(e) {
+                    dbInstance = e.target.result;
+                    resolve();
+                };
+
+                request.onerror = function(e) {
+                    reject(e.target.error);
+                };
+            });
+        }
+
+        function saveKey() {
+            const key = document.getElementById("apiKey").value.trim();
+            localStorage.setItem("gemini_workbench_key", key);
+        }
+
+        function loadSavedKey() {
+            const savedKey = localStorage.getItem("gemini_workbench_key");
+            if (savedKey) {
+                document.getElementById("apiKey").value = savedKey;
+            }
+        }
+
+        function checkCustomModel() {
+            const selectEl = document.getElementById("modelSelect");
+            const wrapper = document.getElementById("customModelWrapper");
+            wrapper.style.display = (selectEl.value === "CUSTOM") ? "inline" : "none";
+            saveCurrentSessionState();
+        }
+
+        function getActiveModel() {
+            const selectEl = document.getElementById("modelSelect");
+            if (selectEl.value === "CUSTOM") {
+                return document.getElementById("customModelInput").value.trim();
+            }
+            return selectEl.value;
+        }
+
+        // SESSION MANAGEMENT LAYER
+        function startNewSession() {
+            activeSessionId = "session_" + Date.now();
+            conversationHistory = [];
+            document.getElementById("sessionTitleInput").value = "Session Run [" + new Date().toLocaleString() + "]";
+            document.getElementById("chatConsole").innerHTML = "<p><font color='#808080'>--- Pipeline online. New session initialized. ---</font></p>";
+            document.getElementById("extractedSource").value = "";
+            document.getElementById("thoughtStream").innerText = "Awaiting pipeline transaction initialization...";
+            document.getElementById("sandboxFrame").srcdoc = "<html><body><p align='center' style='color:#808080; font-family:sans-serif; margin-top:100px;'>Workspace Blank</p></body></html>";
+            document.getElementById("sessionSelect").value = "";
+        }
+
+        function saveCurrentSessionState() {
+            if (!dbInstance || !activeSessionId) return;
+
+            const transaction = dbInstance.transaction(["sessions"], "readwrite");
+            const store = transaction.objectStore("sessions");
+
+            const sessionData = {
+                id: activeSessionId,
+                title: document.getElementById("sessionTitleInput").value.trim(),
+                history: conversationHistory,
+                extractedSource: document.getElementById("extractedSource").value,
+                model: document.getElementById("modelSelect").value,
+                customModel: document.getElementById("customModelInput").value,
+                grounding: document.getElementById("enableGrounding").checked,
+                thinkingLevel: document.getElementById("thinkingLevelSelect").value,
+                sysInstruction: document.getElementById("sysInstruction").value,
+                updatedAt: Date.now()
+            };
+
+            store.put(sessionData);
+
+            transaction.oncomplete = function() {
+                populateSessionDropdown(activeSessionId);
+            };
+        }
+
+        function populateSessionDropdown(selectIdAfterRefresh = null) {
+            if (!dbInstance) return;
+
+            const dropdown = document.getElementById("sessionSelect");
+            dropdown.innerHTML = "";
+
+            const store = dbInstance.transaction(["sessions"], "readonly").objectStore("sessions");
+            const request = store.openCursor(null, "prev"); // Sort newest first
+            
+            let hasEntries = false;
+
+            request.onsuccess = function(e) {
+                const cursor = e.target.result;
+                if (cursor) {
+                    hasEntries = true;
+                    const option = document.createElement("option");
+                    option.value = cursor.value.id;
+                    option.textContent = cursor.value.title || cursor.value.id;
+                    dropdown.appendChild(option);
+                    cursor.continue();
+                } else {
+                    if (!hasEntries) {
+                        const option = document.createElement("option");
+                        option.value = "";
+                        option.textContent = "-- No sessions stored or active --";
+                        dropdown.appendChild(option);
+                    }
+                    if (selectIdAfterRefresh) {
+                        dropdown.value = selectIdAfterRefresh;
+                    } else if (activeSessionId) {
+                        // Check if current active matches an option, keep it aligned
+                        dropdown.value = activeSessionId;
+                    }
+                }
+            };
+        }
+
+        function handleSessionSelectChange() {
+            // Dropdown selection track alone won't trigger load until explicit button invocation
+        }
+
+        function loadSelectedSession() {
+            const dropdown = document.getElementById("sessionSelect");
+            const selectedId = dropdown.value;
+            if (!selectedId) return;
+
+            const store = dbInstance.transaction(["sessions"], "readonly").objectStore("sessions");
+            const request = store.get(selectedId);
+
+            request.onsuccess = function() {
+                const data = request.result;
+                if (!data) return;
+
+                activeSessionId = data.id;
+                document.getElementById("sessionTitleInput").value = data.title || "";
+                conversationHistory = data.history || [];
+                document.getElementById("extractedSource").value = data.extractedSource || "";
+                
+                if (data.model) document.getElementById("modelSelect").value = data.model;
+                if (data.customModel) document.getElementById("customModelInput").value = data.customModel;
+                document.getElementById("enableGrounding").checked = !!data.grounding;
+                if (data.thinkingLevel) document.getElementById("thinkingLevelSelect").value = data.thinkingLevel;
+                if (data.sysInstruction) document.getElementById("sysInstruction").value = data.sysInstruction;
+
+                checkCustomModel();
+                rebuildChatConsoleUI();
+                forceRenderSource();
+                document.getElementById("thoughtStream").innerText = "[Restored historical logs session package details from file architecture]";
+            };
+        }
+
+        function deleteSelectedSession() {
+            const dropdown = document.getElementById("sessionSelect");
+            const selectedId = dropdown.value;
+            if (!selectedId) return;
+
+            if (!confirm("Are you sure you want to completely purge this session recording from IndexedDB memory structures?")) return;
+
+            const transaction = dbInstance.transaction(["sessions"], "readwrite");
+            const store = transaction.objectStore("sessions");
+            store.delete(selectedId);
+
+            transaction.oncomplete = function() {
+                if (activeSessionId === selectedId) {
+                    startNewSession();
+                } else {
+                    populateSessionDropdown();
+                }
+            };
+        }
+
+        // RENDERING DOM MANIPULATION LOOPS
+        function rebuildChatConsoleUI() {
+            const consoleEl = document.getElementById("chatConsole");
+            consoleEl.innerHTML = "";
+
+            if (conversationHistory.length === 0) {
+                consoleEl.innerHTML = "<p><font color='#808080'>--- Pipeline online. Ready for Markdown stream. ---</font></p>";
+                return;
+            }
+
+            conversationHistory.forEach(msg => {
+                const senderName = (msg.role === "user") ? "You" : "Gemini";
+                const elements = createMessageBlock(senderName);
+                
+                // Parse strings safely using marked.js configuration rules
+                if (msg.parts && msg.parts[0] && msg.parts[0].text) {
+                    elements.bodyEl.innerHTML = marked.parse(msg.parts[0].text);
+                }
+            });
+
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function createMessageBlock(sender) {
+            const consoleEl = document.getElementById("chatConsole");
+            const entryBlock = document.createElement("div");
+            entryBlock.style.marginBottom = "15px";
+            entryBlock.style.borderBottom = "1px dashed #D0D0D0";
+            entryBlock.style.paddingBottom = "10px";
+            
+            let headerColor = (sender === "You") ? "#00008B" : "#006400";
+            entryBlock.innerHTML = "<strong><font color='" + headerColor + "'>" + sender + ":</font></strong><br><div class='msg-body'></div><div class='msg-sources' style='margin-top:8px; font-size:12px;'></div>";
+            
+            consoleEl.appendChild(entryBlock);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            return {
+                bodyEl: entryBlock.querySelector('.msg-body'),
+                sourcesEl: entryBlock.querySelector('.msg-sources')
+            };
+        }
+
+        function processCodeBlocks(rawText) {
+            let codeMatch = rawText.match(/```html([\s\S]*?)```/i);
+            if (!codeMatch) {
+                codeMatch = rawText.match(/```([\s\S]*?)```/);
+            }
+
+            if (codeMatch && codeMatch[1]) {
+                const targetCode = codeMatch[1].trim();
+                document.getElementById("extractedSource").value = targetCode;
+                document.getElementById("sandboxFrame").srcdoc = targetCode;
+            } else if (rawText.trim().toLowerCase().startsWith("<!doctype html") || rawText.trim().toLowerCase().startsWith("<html")) {
+                document.getElementById("extractedSource").value = rawText;
+                document.getElementById("sandboxFrame").srcdoc = rawText;
+            }
+        }
+
+        function forceRenderSource() {
+            const currentCode = document.getElementById("extractedSource").value;
+            document.getElementById("sandboxFrame").srcdoc = currentCode || "<html><body><p align='center' style='color:#808080; font-family:sans-serif; margin-top:100px;'>No compilation target output detected</p></body></html>";
+        }
+
+        // LIVE STREAM TRANSMISSION HANDLING
+        async function sendMessage() {
+            const apiKey = document.getElementById("apiKey").value.trim();
+            const modelName = getActiveModel();
+            const promptText = document.getElementById("userInput").value.trim();
+            const systemInstruction = document.getElementById("sysInstruction").value.trim();
+
+            if (!apiKey) {
+                alert("API Interface Error: Key missing parameter inputs.");
+                return;
+            }
+            if (!promptText) return;
+            if (!modelName) {
+                alert("Model Selection Error: String initialization missing.");
+                return;
+            }
+
+            document.getElementById("submitBtn").disabled = true;
+            document.getElementById("submitBtn").value = "Streaming...";
+            
+            const userElements = createMessageBlock("You");
+            userElements.bodyEl.innerHTML = marked.parse(promptText);
+            
+            document.getElementById("userInput").value = "";
+            document.getElementById("thoughtStream").innerText = "[Executing deep thinking loops...]\n";
+
+            conversationHistory.push({
+                "role": "user",
+                "parts": [{"text": promptText}]
+            });
+
+            // Intermediate sync execution block to ensure user data saves if the system drops connection mid-stream
+            saveCurrentSessionState();
+
+            const targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":streamGenerateContent?key=" + apiKey;
+
+            const requestPayload = {
+                "contents": conversationHistory
+            };
+
+            if (systemInstruction) {
+                requestPayload["systemInstruction"] = { "parts": [{"text": systemInstruction}] };
+            }
+
+            if (document.getElementById("enableGrounding").checked) {
+                requestPayload["tools"] = [{ "googleSearch": {} }];
+            }
+
+            const selectedThinkingLevel = document.getElementById("thinkingLevelSelect").value;
+            if (selectedThinkingLevel !== "DEFAULT") {
+                requestPayload["generationConfig"] = requestPayload["generationConfig"] || {};
+                requestPayload["generationConfig"]["thinkingConfig"] = {
+                    "thinkingLevel": selectedThinkingLevel
+                };
+            }
+
+            const aiElements = createMessageBlock("Gemini");
+            let fullAccumulatedResponse = "";
+            let fullThoughtTracking = "";
+            let sourcesFound = false;
+
+            try {
+                const response = await fetch(targetUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestPayload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error("HTTP " + response.status + " - " + errorText);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let responseBuffer = "";
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    responseBuffer += decoder.decode(value, { stream: true });
+                    
+                    let boundaryIndex;
+                    while ((boundaryIndex = responseBuffer.indexOf("}\n,")) !== -1 || (boundaryIndex = responseBuffer.indexOf("}\n]")) !== -1) {
+                        let singleChunkRaw = responseBuffer.substring(0, boundaryIndex + 1).trim();
+                        responseBuffer = responseBuffer.substring(boundaryIndex + 3);
+
+                        if (singleChunkRaw.startsWith("[")) {
+                            singleChunkRaw = singleChunkRaw.substring(1).trim();
+                        }
+
+                        try {
+                            if (!singleChunkRaw) continue;
+                            const parsedChunk = JSON.parse(singleChunkRaw);
+                            const candidate = parsedChunk.candidates && parsedChunk.candidates[0];
+                            
+                            if (candidate && candidate.content && candidate.content.parts) {
+                                for (const part of candidate.content.parts) {
+                                    if (part.thought || ('text' in part && candidate.content.role === 'thought')) {
+                                        fullThoughtTracking += part.text;
+                                        document.getElementById("thoughtStream").innerText = fullThoughtTracking;
+                                        document.getElementById("thoughtStream").scrollTop = document.getElementById("thoughtStream").scrollHeight;
+                                    } 
+                                    else if (part.text) {
+                                        fullAccumulatedResponse += part.text;
+                                        aiElements.bodyEl.innerHTML = marked.parse(fullAccumulatedResponse);
+                                        document.getElementById("chatConsole").scrollTop = document.getElementById("chatConsole").scrollHeight;
+                                    }
+                                }
+                            }
+
+                            if (candidate && candidate.groundingMetadata && !sourcesFound) {
+                                const metadata = candidate.groundingMetadata;
+                                if (metadata.groundingChunks && metadata.groundingChunks.length > 0) {
+                                    sourcesFound = true;
+                                    let htmlSourceLedger = "<hr size='1' noshade><font color='#555555'><b>Grounding Resources Searched:</b></font><ul>";
+                                    metadata.groundingChunks.forEach(chunk => {
+                                        if (chunk.web && chunk.web.uri) {
+                                            htmlSourceLedger += "<li><a href='" + chunk.web.uri + "' target='_blank'>" + (chunk.web.title || chunk.web.uri) + "</a></li>";
+                                        }
+                                    });
+                                    htmlSourceLedger += "</ul>";
+                                    aiElements.sourcesEl.innerHTML = htmlSourceLedger;
+                                }
+                            }
+                        } catch (e) {
+                            // Fragment correction catch boundary block
+                        }
+                    }
+                }
+
+                conversationHistory.push({
+                    "role": "model",
+                    "parts": [{"text": fullAccumulatedResponse}]
+                });
+
+                processCodeBlocks(fullAccumulatedResponse);
+                
+                // CRITICAL ATOMIC WORK INTERLOCK: Commit total state history directly down into the database layer
+                saveCurrentSessionState();
+
+            } catch (err) {
+                const errorBlock = document.createElement("div");
+                errorBlock.innerHTML = "<strong><font color='#FF0000'>System Error Node:</font></strong><pre style='white-space: pre-wrap; font-family: monospace;'> " + err.message + "</pre>";
+                document.getElementById("chatConsole").appendChild(errorBlock);
+                conversationHistory.pop();
+            } finally {
+                document.getElementById("submitBtn").disabled = false;
+                document.getElementById("submitBtn").value = "Execute Pipeline Query";
+            }
+        }
+    </script>
+</body>
+</html>
