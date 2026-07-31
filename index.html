@@ -65,6 +65,7 @@
                     <select id="providerSelect" onchange="handleProviderChange()">
                         <option value="gemini">Google Gemini</option>
                         <option value="openai">OpenAI Native</option>
+                        <option value="groq">Groq LPU Accelerator</option>
                     </select>
                     &nbsp;&nbsp;
 
@@ -97,12 +98,13 @@
                     </div>
 
                     <div id="openaiOptions" style="display: none;">
-                        <label for="openaiReasoningSelect"><b>Reasoning Effort (O-Series Models):</b></label>
+                        <label for="openaiReasoningSelect"><b>Reasoning Effort / Settings:</b></label>
                         <select id="openaiReasoningSelect" onchange="saveCurrentSessionState()">
                             <option value="none">Disabled / Standard Text</option>
                             <option value="low">low</option>
                             <option value="medium">medium</option>
                             <option value="high">high</option>
+                            <option value="xhigh">xhigh</option>
                         </select>
                     </div>
                 </form>
@@ -168,7 +170,7 @@
         let activeSessionId = null;
         let conversationHistory = [];
 
-        // MODEL LIST ARRAYS
+        // MODEL LIST ARRAYS (UPDATED FOR 2026 SPECIFICATIONS)
         const modelRegistry = {
             gemini: [
                 { name: "gemini-3.6-flash (Performance Default)", val: "gemini-3.6-flash" },
@@ -182,10 +184,22 @@
                 { name: "CUSTOM [Manual Entry Identity String]", val: "CUSTOM" }
             ],
             openai: [
-                { name: "gpt-4o (Standard Flagship Intelligence)", val: "gpt-4o" },
-                { name: "gpt-4o-mini", val: "gpt-4o-mini" },
-                { name: "o1 (Advanced Deep Multi-turn Reasoning)", val: "o1" },
-                { name: "o3-mini", val: "o3-mini" },
+                { name: "GPT-5.5 (Flagship General Intelligence)", val: "gpt-5.5" },
+                { name: "GPT-5.5 Pro (Highest Stakes Multi-turn Reasoning)", val: "gpt-5.5-pro" },
+                { name: "GPT-5.4 (Everyday Balanced Workhorse)", val: "gpt-5.4" },
+                { name: "GPT-5.4 mini (Affordable High-Volume Logic)", val: "gpt-5.4-mini" },
+                { name: "GPT-5.4 nano (Fast & Low-Cost Processing)", val: "gpt-5.4-nano" },
+                { name: "o3 (Advanced Math, Science & Planning Reasoning)", val: "o3" },
+                { name: "o3-pro (Maximum Effort Deep Reasoning)", val: "o3-pro" },
+                { name: "o4-mini (Cost-Efficient Reasoning)", val: "o4-mini" },
+                { name: "CUSTOM [Manual Entry Identity String]", val: "CUSTOM" }
+            ],
+            groq: [
+                { name: "Llama 3.3 70B Versatile", val: "llama-3.3-70b-versatile" },
+                { name: "Llama 3.1 8B Instant", val: "llama-3.1-8b-instant" },
+                { name: "GPT-OSS 120B (High Performance Open Alternative)", val: "openai/gpt-oss-120b" },
+                { name: "GPT-OSS 20B (Fast Efficiency)", val: "openai/gpt-oss-20b" },
+                { name: "Qwen 3.6 27B", val: "qwen/qwen3.6-27b" },
                 { name: "CUSTOM [Manual Entry Identity String]", val: "CUSTOM" }
             ]
         };
@@ -200,7 +214,6 @@
                     handler: customStreamExecutionHandler
                 };
                 
-                // Add option element dynamically to select list container
                 const provSel = document.getElementById("providerSelect");
                 const opt = document.createElement("option");
                 opt.value = providerId;
@@ -218,7 +231,6 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    // Safety wrapped internal evaluation step to register standard hook calls
                     const moduleScriptContent = e.target.result;
                     const executeModuleRegistrationClosure = new Function(moduleScriptContent);
                     executeModuleRegistrationClosure();
@@ -262,7 +274,6 @@
             document.getElementById("geminiOptions").style.display = (currentProvider === "gemini") ? "block" : "none";
             document.getElementById("openaiOptions").style.display = (currentProvider === "openai") ? "block" : "none";
 
-            // Verify if provider targets core assets or is dynamic module injection payload
             if (modelRegistry[currentProvider]) {
                 modelRegistry[currentProvider].forEach(m => {
                     const o = document.createElement("option");
@@ -471,7 +482,6 @@
             document.getElementById("userInput").value = "";
             document.getElementById("thoughtStream").innerText = "[Initializing network transport handshake channels...]\n";
 
-            // RECONCILE FORMAT SHAPES TO MAP INTERNALLY UNIFORM RECORDS
             conversationHistory.push({ role: "user", text: textPrompt });
             saveCurrentSessionState();
 
@@ -480,9 +490,7 @@
             let logicText = "";
 
             try {
-                // ROUTE PIPELINE EXECUTION PATHWAY BASED ON SELECTION TARGET
                 if (window.ModuleEngine.customProviders[provider]) {
-                    // Hand off control vector directly to extension module execution runtime
                     await window.ModuleEngine.customProviders[provider].handler({
                         apiKey: apiKey,
                         model: modelIdent,
@@ -502,7 +510,6 @@
                     });
                 } 
                 else if (provider === "gemini") {
-                    // GOOGLE GEMINI EXECUTION SYSTEM PIPELINE
                     const targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelIdent + ":streamGenerateContent?key=" + apiKey;
                     const payload = { contents: conversationHistory.map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })) };
                     
@@ -561,17 +568,24 @@
                         }
                     }
                 } 
-                else if (provider === "openai") {
-                    // OPENAI CHAT COMPLETIONS EXECUTION SYSTEM PIPELINE
-                    const targetUrl = "https://api.openai.com/v1/chat/completions";
+                else if (provider === "openai" || provider === "groq") {
+                    // BOTH OPENAI NATIVE AND GROQ USE COMPATIBLE STREAM FORMATS
+                    const targetUrl = (provider === "groq") 
+                        ? "https://api.groq.com/openai/v1/chat/completions" 
+                        : "https://api.openai.com/v1/chat/completions";
+
                     const messages = [];
                     if (sysInstruction) messages.push({ role: "system", content: sysInstruction });
                     conversationHistory.forEach(m => messages.push({ role: m.role, content: m.text }));
 
                     const payload = { model: modelIdent, messages: messages, stream: true };
-                    const rsn = document.getElementById("openaiReasoningSelect").value;
-                    if (rsn !== "none" && (modelIdent.startsWith("o1") || modelIdent.startsWith("o3"))) {
-                        payload.reasoning_effort = rsn;
+                    
+                    // Apply OpenAI reasoning configurations to reasoning variants
+                    if (provider === "openai") {
+                        const rsn = document.getElementById("openaiReasoningSelect").value;
+                        if (rsn !== "none" && (modelIdent.startsWith("o1") || modelIdent.startsWith("o3") || modelIdent.startsWith("o4") || modelIdent.includes("pro"))) {
+                            payload.reasoning_effort = rsn;
+                        }
                     }
 
                     const response = await fetch(targetUrl, {
@@ -591,7 +605,7 @@
                         buffer += decoder.decode(value, { stream: true });
                         
                         let lines = buffer.split("\n");
-                        buffer = lines.pop(); // Save fragmented track to tail buffer bounds
+                        buffer = lines.pop();
 
                         for (let line of lines) {
                             line = line.trim();
@@ -602,7 +616,6 @@
                                 const json = JSON.parse(line.substring(6));
                                 const delta = json.choices && json.choices[0] && json.choices[0].delta;
                                 if (delta) {
-                                    // Handle reasoning content blocks separately if returned by model
                                     if (delta.reasoning_content) {
                                         logicText += delta.reasoning_content;
                                         document.getElementById("thoughtStream").innerText = logicText;
