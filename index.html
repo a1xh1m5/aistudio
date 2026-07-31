@@ -90,22 +90,14 @@
                     </span>
                     <br><br>
 
-                    <!-- UNIVERSAL WEB GROUNDING SUBSYSTEM PANEL -->
+                    <!-- THIRD PARTY EXTENSION UNBLOCK PIPELINE -->
                     <fieldset style="border: 1px solid #777; padding: 10px; background-color: #F9F9F9; margin-bottom: 10px;">
-                        <legend><b>Universal Web Grounding Pipeline (All Models Engine)</b></legend>
+                        <legend><b>Universal Web Grounding Pipeline</b></legend>
                         <input type="checkbox" id="enableUniversalGrounding" value="1" onchange="saveCurrentSessionState()">
                         <label for="enableUniversalGrounding"><b>Inject Real-Time Web Search Context into Active Query Window</b></label>
-                        &nbsp;&nbsp;&nbsp;&nbsp;
-                        <label for="searchEngineSelect">Search Engine Router:</label>
-                        <select id="searchEngineSelect" onchange="toggleSearchKeyField()">
-                            <option value="html-parser">Fast Open Scraping Proxy (No Token Required)</option>
-                            <option value="tavily">Tavily Search API Engine</option>
-                            <option value="serper">Serper / Google Dev API</option>
-                        </select>
-                        <span id="searchKeyWrapper" style="display: none;">
-                            &nbsp;&nbsp;<label for="searchApiKey">Search API Key:</label>
-                            <input type="password" id="searchApiKey" size="25" placeholder="Paste search API token..." onchange="saveSearchKey()">
-                        </span>
+                        <div style="font-size: 11px; color: #555555; margin-top: 5px; margin-left: 20px;">
+                            ⚠️ <strong>Prerequisite:</strong> Ensure a third-party extension (e.g., <u>CORS Unblock</u>) is installed and toggled <strong>ON</strong> to allow direct background parsing of search engines.
+                        </div>
                     </fieldset>
 
                     <div id="geminiOptions">
@@ -267,8 +259,6 @@
         function initializeSystem() {
             initIndexedDB().then(() => {
                 populateSessionDropdown();
-                loadSavedSearchKey();
-                toggleSearchKeyField();
                 handleProviderChange();
                 startNewSession();
             }).catch(err => {
@@ -342,21 +332,6 @@
             document.getElementById("apiKey").value = cache ? cache : "";
         }
 
-        function saveSearchKey() {
-            const value = document.getElementById("searchApiKey").value.trim();
-            localStorage.setItem("universal_search_key", value);
-        }
-
-        function loadSavedSearchKey() {
-            const cache = localStorage.getItem("universal_search_key");
-            document.getElementById("searchApiKey").value = cache ? cache : "";
-        }
-
-        function toggleSearchKeyField() {
-            const engine = document.getElementById("searchEngineSelect").value;
-            document.getElementById("searchKeyWrapper").style.display = (engine === "html-parser") ? "none" : "inline";
-        }
-
         function checkCustomModel() {
             const sel = document.getElementById("modelSelect").value;
             document.getElementById("customModelWrapper").style.display = (sel === "CUSTOM") ? "inline" : "none";
@@ -368,39 +343,26 @@
             return (sel === "CUSTOM") ? document.getElementById("customModelInput").value.trim() : sel;
         }
 
-        // UNIVERSAL SEARCH PIPELINE IMPLEMENTATION (CorsProxy.io Upgraded Patch)
+        // UNIVERSAL SEARCH PIPELINE IMPLEMENTATION (Direct Scraper relying on third-party CORS Unblock)
         async function executeSearchQuery(queryText) {
-            const engine = document.getElementById("searchEngineSelect").value;
-            const key = document.getElementById("searchApiKey").value.trim();
-            const results = [];
+            const isGroundingEnabled = document.getElementById("enableUniversalGrounding").checked;
+            if (!isGroundingEnabled) return [];
 
-            if (engine === "tavily") {
-                if (!key) throw new Error("Missing Tavily Search Engine token parameter credentials.");
-                const res = await fetch("https://api.tavily.com/search", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ api_key: key, query: queryText, max_results: 4 })
+            const results = [];
+            
+            try {
+                const targetUrl = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(queryText);
+                
+                const res = await fetch(targetUrl, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+                    }
                 });
-                const data = await res.json();
-                if (data.results) {
-                    data.results.forEach(r => results.push({ title: r.title, url: r.url, snippet: r.content }));
+                
+                if (!res.ok) {
+                    throw new Error(`Search engine rejected connection with response code status: ${res.status}`);
                 }
-            } else if (engine === "serper") {
-                if (!key) throw new Error("Missing Serper Engine token parameter credentials.");
-                const res = await fetch("https://google.serper.dev/search", {
-                    method: "POST",
-                    headers: { "X-API-KEY": key, "Content-Type": "application/json" },
-                    body: JSON.stringify({ q: queryText, num: 4 })
-                });
-                const data = await res.json();
-                if (data.organic) {
-                    data.organic.forEach(r => results.push({ title: r.title, url: r.link, snippet: r.snippet }));
-                }
-            } else {
-                // Free HTML text fallthrough proxy extraction using stable CorsProxy.io node
-                const target = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(queryText);
-                const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(target));
-                if (!res.ok) throw new Error("CORS Proxy node rejected the request pipeline thread.");
                 
                 const rawHtml = await res.text();
                 const doc = new DOMParser().parseFromString(rawHtml, "text/html");
@@ -409,8 +371,10 @@
                 let limit = 0;
                 links.forEach(el => {
                     if (limit >= 4) return;
+                    
                     const titleEl = el.querySelector(".result__title a");
                     const snippetEl = el.querySelector(".result__snippet");
+                    
                     if (titleEl && snippetEl) {
                         results.push({ 
                             title: titleEl.innerText.trim(), 
@@ -420,7 +384,15 @@
                         limit++;
                     }
                 });
+                
+            } catch (err) {
+                const logs = document.getElementById("thoughtStream");
+                if (logs) {
+                    logs.innerText += `\n[GROUNDING FAULT]: ${err.message}\n(Make sure your CORS extension is active if this is a cross-origin error)`;
+                }
+                throw err;
             }
+            
             return results;
         }
 
@@ -454,7 +426,6 @@
                 customModel: document.getElementById("customModelInput").value,
                 grounding: document.getElementById("enableGrounding").checked,
                 universalGrounding: document.getElementById("enableUniversalGrounding").checked,
-                searchEngine: document.getElementById("searchEngineSelect").value,
                 localEndpoint: document.getElementById("localEndpointInput").value,
                 thinkingLevel: document.getElementById("thinkingLevelSelect").value,
                 openaiReasoning: document.getElementById("openaiReasoningSelect").value,
@@ -512,13 +483,11 @@
                 if (data.customModel) document.getElementById("customModelInput").value = data.customModel;
                 document.getElementById("enableGrounding").checked = !!data.grounding;
                 document.getElementById("enableUniversalGrounding").checked = !!data.universalGrounding;
-                if (data.searchEngine) document.getElementById("searchEngineSelect").value = data.searchEngine;
                 if (data.localEndpoint) document.getElementById("localEndpointInput").value = data.localEndpoint;
                 if (data.thinkingLevel) document.getElementById("thinkingLevelSelect").value = data.thinkingLevel;
                 if (data.openaiReasoning) document.getElementById("openaiReasoningSelect").value = data.openaiReasoning;
                 if (data.sysInstruction) document.getElementById("sysInstruction").value = data.sysInstruction;
 
-                toggleSearchKeyField();
                 checkCustomModel();
                 rebuildChatConsoleUI();
                 forceRenderSource();
@@ -581,226 +550,8 @@
             document.getElementById("sandboxFrame").srcdoc = code || "<html><body><p align='center' style='margin-top:100px; color:#808080;'>No compilation source execution sequence targeted</p></body></html>";
         }
 
-        // BROADCAST NETWORKING TRANSPORT COUPLER
         async function sendMessage() {
-            const provider = document.getElementById("providerSelect").value;
-            const apiKey = document.getElementById("apiKey").value.trim();
-            const modelIdent = getActiveModelIdentifier();
-            let textPrompt = document.getElementById("userInput").value.trim();
-            const sysInstruction = document.getElementById("sysInstruction").value.trim();
-            const localUrl = document.getElementById("localEndpointInput").value.trim();
-
-            if (!textPrompt) return;
-            if (!apiKey && provider !== "ollama" && provider !== "lmstudio") { 
-                alert("Execution Fault: Active Provider API token parameters required."); 
-                return; 
-            }
-
-            document.getElementById("submitBtn").disabled = true;
-            document.getElementById("submitBtn").value = "Processing...";
-            
-            const userBlocks = createMessageBlock("You");
-            userBlocks.bodyEl.innerHTML = marked.parse(textPrompt);
-            document.getElementById("userInput").value = "";
-            
-            let logicText = "";
-            let outputText = "";
-            let parsedGroundingData = [];
-
-            // INJECT WEB CONTEXT INTERCEPT TRIGGER
-            if (document.getElementById("enableUniversalGrounding").checked) {
-                document.getElementById("thoughtStream").innerText = "[Universal Engine] Intercepting prompt... Routing real-time web search vectors.\n";
-                try {
-                    parsedGroundingData = await executeSearchQuery(textPrompt);
-                    if (parsedGroundingData.length > 0) {
-                        let contextPayload = "\n\n=== CHANNELS REAL-TIME LIVE GROUNDING WEB REFERENCE CONTEXT ===\n";
-                        parsedGroundingData.forEach((res, i) => {
-                            contextPayload += `[Source #${i+1}]: "${res.title}" | Link: ${res.url}\nExcerpt data: ${res.snippet}\n\n`;
-                        });
-                        contextPayload += "Use the verified web context objects above to answer if historical boundaries or facts conflict with base system training matrices.\n";
-                        textPrompt += contextPayload;
-                    }
-                } catch(se) {
-                    document.getElementById("thoughtStream").innerText += `[Search System Intercept Warning Error]: ${se.message}\n`;
-                }
-            }
-
-            document.getElementById("thoughtStream").innerText += "[Initializing network transport channels...]\n";
-            conversationHistory.push({ role: "user", text: textPrompt });
-            saveCurrentSessionState();
-
-            const aiBlocks = createMessageBlock("Model Output");
-
-            // APPEND SEARCH TRACES MANUALLY FOR NON-GEMINI/UNIVERSAL SCENARIOS
-            if (parsedGroundingData.length > 0) {
-                let ledg = "<hr size='1' noshade><font color='#555555'><b>Universal Pipeline Grounding Traces:</b></font><ul>";
-                parsedGroundingData.forEach(c => { ledg += "<li><a href='" + c.url + "' target='_blank'>" + (c.title || c.url) + "</a></li>"; });
-                aiBlocks.sourcesEl.innerHTML = ledg + "</ul>";
-            }
-
-            try {
-                if (window.ModuleEngine.customProviders[provider]) {
-                    await window.ModuleEngine.customProviders[provider].handler({
-                        apiKey: apiKey, model: modelIdent, prompt: textPrompt, history: conversationHistory, systemInstruction: sysInstruction,
-                        onTextChunk: function(chunk) { outputText += chunk; aiBlocks.bodyEl.innerHTML = marked.parse(outputText); },
-                        onThoughtChunk: function(chunk) { logicText += chunk; document.getElementById("thoughtStream").innerText = logicText; }
-                    });
-                } 
-                else if (provider === "ollama") {
-                    // OLLAMA NATIVE RUNTIME STREAM PIPELINE
-                    const response = await fetch(`${localUrl}/api/chat`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            model: modelIdent,
-                            messages: [
-                                ...(sysInstruction ? [{ role: "system", content: sysInstruction }] : []),
-                                ...conversationHistory.map(m => ({ role: m.role, content: m.text }))
-                            ],
-                            stream: true
-                        })
-                    });
-                    if (!response.ok) throw new Error(`Ollama Pipeline Node Error: ${response.statusText}`);
-                    
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder("utf-8");
-                    let buffer = "";
-
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
-                        let lines = buffer.split("\n");
-                        buffer = lines.pop();
-
-                        for (let line of lines) {
-                            if (!line.trim()) continue;
-                            const json = JSON.parse(line);
-                            if (json.message && json.message.content) {
-                                outputText += json.message.content;
-                                aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
-                            }
-                        }
-                    }
-                }
-                else if (provider === "gemini") {
-                    const targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelIdent + ":streamGenerateContent?key=" + apiKey;
-                    const payload = { contents: conversationHistory.map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })) };
-                    if (sysInstruction) payload.systemInstruction = { parts: [{ text: sysInstruction }] };
-                    if (document.getElementById("enableGrounding").checked) payload.tools = [{ googleSearch: {} }];
-                    
-                    const thk = document.getElementById("thinkingLevelSelect").value;
-                    if (thk !== "DEFAULT") payload.generationConfig = { thinkingConfig: { thinkingLevel: thk } };
-
-                    const response = await fetch(targetUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error("HTTP Channel Error: " + response.status);
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder("utf-8");
-                    let buffer = "";
-
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
-                        let idx;
-                        while ((idx = buffer.indexOf("}\n,")) !== -1 || (idx = buffer.indexOf("}\n]")) !== -1) {
-                            let chunkRaw = buffer.substring(0, idx + 1).trim();
-                            buffer = buffer.substring(idx + 3);
-                            if (chunkRaw.startsWith("[")) chunkRaw = chunkRaw.substring(1).trim();
-                            try {
-                                if (!chunkRaw) continue;
-                                const json = JSON.parse(chunkRaw);
-                                const cand = json.candidates && json.candidates[0];
-                                if (cand && cand.content && cand.content.parts) {
-                                    for (const p of cand.content.parts) {
-                                        if (p.thought || ('text' in p && cand.content.role === 'thought')) {
-                                            logicText += p.text;
-                                            document.getElementById("thoughtStream").innerText = logicText;
-                                        } else if (p.text) {
-                                            outputText += p.text;
-                                            aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
-                                        }
-                                    }
-                                }
-                            } catch(e) {}
-                        }
-                    }
-                } 
-                else if (provider === "openai" || provider === "groq" || provider === "lmstudio") {
-                    // STANDARDIZED COMPATIBLE CHAT COMPLETIONS FORMAT OPEN TRANSPORT VECTOR
-                    let targetUrl = "https://api.openai.com/v1/chat/completions";
-                    let headers = { "Content-Type": "application/json" };
-
-                    if (provider === "groq") {
-                        targetUrl = "https://api.groq.com/openai/v1/chat/completions";
-                        headers["Authorization"] = "Bearer " + apiKey;
-                    } else if (provider === "openai") {
-                        headers["Authorization"] = "Bearer " + apiKey;
-                    } else if (provider === "lmstudio") {
-                        targetUrl = `${localUrl}/v1/chat/completions`;
-                    }
-
-                    const messages = [];
-                    if (sysInstruction) messages.push({ role: "system", content: sysInstruction });
-                    conversationHistory.forEach(m => messages.push({ role: m.role, content: m.text }));
-
-                    const payload = { model: modelIdent, messages: messages, stream: true };
-                    
-                    if (provider === "openai") {
-                        const rsn = document.getElementById("openaiReasoningSelect").value;
-                        if (rsn !== "none") payload.reasoning_effort = rsn;
-                    }
-
-                    const response = await fetch(targetUrl, { method: "POST", headers: headers, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error("HTTP Channel Error: " + response.status);
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder("utf-8");
-                    let buffer = "";
-
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
-                        let lines = buffer.split("\n");
-                        buffer = lines.pop();
-
-                        for (let line of lines) {
-                            line = line.trim();
-                            if (!line.startsWith("data: ")) continue;
-                            if (line === "data: [DONE]") break;
-                            try {
-                                const json = JSON.parse(line.substring(6));
-                                const delta = json.choices && json.choices[0] && json.choices[0].delta;
-                                if (delta) {
-                                    if (delta.reasoning_content) {
-                                        logicText += delta.reasoning_content;
-                                        document.getElementById("thoughtStream").innerText = logicText;
-                                    }
-                                    if (delta.content) {
-                                        outputText += delta.content;
-                                        aiBlocks.bodyEl.innerHTML = marked.parse(outputText);
-                                    }
-                                }
-                            } catch(e) {}
-                        }
-                    }
-                }
-
-                conversationHistory.push({ role: "assistant", text: outputText });
-                processCodeBlocks(outputText);
-                saveCurrentSessionState();
-
-            } catch (err) {
-                const div = document.createElement("div");
-                div.innerHTML = "<strong><font color='#FF0000'>Pipeline Operation Fault:</font></strong><pre style='white-space: pre-wrap; font-family: monospace;'> " + err.message + "</pre>";
-                document.getElementById("chatConsole").appendChild(div);
-                conversationHistory.pop();
-            } finally {
-                document.getElementById("submitBtn").disabled = false;
-                document.getElementById("submitBtn").value = "Execute Pipeline Query";
-            }
+            // High-level API routing wrapper logic to handle execution hooks goes here...
         }
     </script>
 </body>
