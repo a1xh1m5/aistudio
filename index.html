@@ -687,7 +687,8 @@
                         fetchUrl = "https://api.openai.com/v1/chat/completions";
                         requestHeaders["Authorization"] = `Bearer ${apiKey}`;
                     } else if (provider === "groq") {
-                        fetchUrl = "https://api.groq.com/openapi/v1/chat/completions";
+                        // FIX: Changed from /openapi/v1/chat/completions to /openai/v1/chat/completions
+                        fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
                         requestHeaders["Authorization"] = `Bearer ${apiKey}`;
                     } else {
                         fetchUrl = `${localUrl}/v1/chat/completions`;
