@@ -368,7 +368,7 @@
             return (sel === "CUSTOM") ? document.getElementById("customModelInput").value.trim() : sel;
         }
 
-        // UNIVERSAL SEARCH PIPELINE IMPLEMENTATION
+        // UNIVERSAL SEARCH PIPELINE IMPLEMENTATION (CorsProxy.io Upgraded Patch)
         async function executeSearchQuery(queryText) {
             const engine = document.getElementById("searchEngineSelect").value;
             const key = document.getElementById("searchApiKey").value.trim();
@@ -397,11 +397,13 @@
                     data.organic.forEach(r => results.push({ title: r.title, url: r.link, snippet: r.snippet }));
                 }
             } else {
-                // Free HTML text fallthrough proxy extraction
+                // Free HTML text fallthrough proxy extraction using stable CorsProxy.io node
                 const target = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(queryText);
-                const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(target));
-                const wrapper = await res.json();
-                const doc = new DOMParser().parseFromString(wrapper.contents, "text/html");
+                const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(target));
+                if (!res.ok) throw new Error("CORS Proxy node rejected the request pipeline thread.");
+                
+                const rawHtml = await res.text();
+                const doc = new DOMParser().parseFromString(rawHtml, "text/html");
                 const links = doc.querySelectorAll(".web-result");
                 
                 let limit = 0;
@@ -410,7 +412,11 @@
                     const titleEl = el.querySelector(".result__title a");
                     const snippetEl = el.querySelector(".result__snippet");
                     if (titleEl && snippetEl) {
-                        results.push({ title: titleEl.innerText.trim(), url: titleEl.getAttribute("href"), snippet: snippetEl.innerText.trim() });
+                        results.push({ 
+                            title: titleEl.innerText.trim(), 
+                            url: titleEl.getAttribute("href"), 
+                            snippet: snippetEl.innerText.trim() 
+                        });
                         limit++;
                     }
                 });
